@@ -4,7 +4,7 @@
  * Copyright (c) 2012, Mat Groves
  * http://goodboydigital.com/
  *
- * Compiled: 2013-05-06
+ * Compiled: 2013-05-10
  *
  * Pixi.JS is licensed under the MIT License.
  * http://www.opensource.org/licenses/mit-license.php
@@ -122,6 +122,38 @@ PIXI.Rectangle.clone = function()
 
 // constructor
 PIXI.Rectangle.constructor = PIXI.Rectangle;
+
+
+/**
+ * @author Adrien Brault <adrien.brault@gmail.com>
+ */
+
+/**
+ * @class Polygon
+ * @constructor
+ * @param points {Array}
+ */
+PIXI.Polygon = function(points)
+{
+	this.points = points;
+}
+
+/**
+ * @method clone
+ * @return a copy of the polygon
+ */
+PIXI.Polygon.clone = function()
+{
+	var points = [];
+	for (var i=0; i<this.points.length; i++) {
+		points.push(this.points[i].clone());
+	}
+
+	return new PIXI.Polygon(points);
+}
+
+// constructor
+PIXI.Polygon.constructor = PIXI.Polygon;
 
 
 /**
@@ -867,8 +899,8 @@ PIXI.Text = function(text, style)
 
     this.setText(text);
     this.setStyle(style);
-    //this.updateText();
-    this.dirty = true;
+    this.updateText();
+    this.dirty = false;
 };
 
 // constructor
@@ -1255,7 +1287,7 @@ PIXI.InteractionManager.prototype.collectInteractiveSprite = function(displayObj
 	
 	//this.interactiveItems = [];
 	/// make an interaction tree... {item.__interactiveParent}
-	for (var i = length-1; i >= 0; i--)
+	for (var i = 0; i < length; i++)
 	{
 		var child = children[i];
 		
@@ -1348,7 +1380,7 @@ PIXI.InteractionManager.prototype.update = function()
 	
 	if(this.target)this.target.view.style.cursor = "default";	
 				
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var item = this.interactiveItems[i];
 		if(!item.visible)continue;
@@ -1404,7 +1436,7 @@ PIXI.InteractionManager.prototype.onMouseMove = function(event)
 	var global = this.mouse.global;
 	
 	
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var item = this.interactiveItems[i];
 		
@@ -1434,7 +1466,7 @@ PIXI.InteractionManager.prototype.onMouseDown = function(event)
 	
 	// while 
 	// hit test 
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var item = this.interactiveItems[i];
 		
@@ -1465,7 +1497,7 @@ PIXI.InteractionManager.prototype.onMouseUp = function(event)
 	var length = this.interactiveItems.length;
 	var up = false;
 	
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var item = this.interactiveItems[i];
 		
@@ -1506,15 +1538,56 @@ PIXI.InteractionManager.prototype.hitTest = function(item, interactionData)
 	
 	if(!item.visible)return false;
 	
-	if(item instanceof PIXI.Sprite)
+	if(item.hitArea)
+	{
+		var worldTransform = item.worldTransform;
+		var hitArea = item.hitArea;
+		
+		var a00 = worldTransform[0], a01 = worldTransform[1], a02 = worldTransform[2],
+			a10 = worldTransform[3], a11 = worldTransform[4], a12 = worldTransform[5],
+			id = 1 / (a00 * a11 + a01 * -a10);
+		
+		var x = a11 * id * global.x + -a01 * id * global.y + (a12 * a01 - a02 * a11) * id; 
+		var y = a00 * id * global.y + -a10 * id * global.x + (-a12 * a00 + a02 * a10) * id;
+		
+		if (item.hitArea instanceof PIXI.Polygon) {
+			var inside = false;
+			
+			// https://github.com/substack/point-in-polygon/blob/master/index.js
+			for (var i = 0, j = item.hitArea.points.length - 1; i < item.hitArea.points.length; j = i++) {
+				var xi = item.hitArea.points[i].x, yi = item.hitArea.points[i].y;
+				var xj = item.hitArea.points[j].x, yj = item.hitArea.points[j].y;
+				
+				var intersect = ((yi > y) != (yj > y))
+					&& (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+				if (intersect) inside = !inside;
+			}
+			
+			if (inside) {
+				return true;
+			}
+		} else {
+			var x1 = hitArea.x;
+			if(x > x1 && x < x1 + hitArea.width)
+			{
+				var y1 = hitArea.y;
+				
+				if(y > y1 && y < y1 + hitArea.height)
+				{
+					return true;
+				}
+			}
+		}
+	}
+	else if(item instanceof PIXI.Sprite)
 	{
 		var worldTransform = item.worldTransform;
 		
 		var a00 = worldTransform[0], a01 = worldTransform[1], a02 = worldTransform[2],
-            a10 = worldTransform[3], a11 = worldTransform[4], a12 = worldTransform[5],
-            id = 1 / (a00 * a11 + a01 * -a10);
+			a10 = worldTransform[3], a11 = worldTransform[4], a12 = worldTransform[5],
+			id = 1 / (a00 * a11 + a01 * -a10);
 		
-		var x = a11 * id * global.x + -a01 * id * global.y + (a12 * a01 - a02 * a11) * id; 
+		var x = a11 * id * global.x + -a01 * id * global.y + (a12 * a01 - a02 * a11) * id;
 		var y = a00 * id * global.y + -a10 * id * global.x + (-a12 * a00 + a02 * a10) * id;
 		
 		var width = item.texture.frame.width;
@@ -1525,7 +1598,7 @@ PIXI.InteractionManager.prototype.hitTest = function(item, interactionData)
 		if(x > x1 && x < x1 + width)
 		{
 			var y1 = -height * item.anchor.y;
-			
+		
 			if(y > y1 && y < y1 + height)
 			{
 				// set the target property if a hit is true!
@@ -1534,33 +1607,10 @@ PIXI.InteractionManager.prototype.hitTest = function(item, interactionData)
 			}
 		}
 	}
-	else if(item.hitArea)
-	{
-		var worldTransform = item.worldTransform;
-		var hitArea = item.hitArea;
-		
-		var a00 = worldTransform[0], a01 = worldTransform[1], a02 = worldTransform[2],
-            a10 = worldTransform[3], a11 = worldTransform[4], a12 = worldTransform[5],
-            id = 1 / (a00 * a11 + a01 * -a10);
-		
-		var x = a11 * id * global.x + -a01 * id * global.y + (a12 * a01 - a02 * a11) * id; 
-		var y = a00 * id * global.y + -a10 * id * global.x + (-a12 * a00 + a02 * a10) * id;
-		
-		var x1 = hitArea.x;
-		if(x > x1 && x < x1 + hitArea.width)
-		{
-			var y1 = hitArea.y;
-			
-			if(y > y1 && y < y1 + hitArea.height)
-			{
-				return true;
-			}
-		}
-	}
 	
 	var length = item.children.length;
 	
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var tempItem = item.children[i];
 		var hit = this.hitTest(tempItem, interactionData);
@@ -1590,7 +1640,7 @@ PIXI.InteractionManager.prototype.onTouchMove = function(event)
 	}
 	
 	var length = this.interactiveItems.length;
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var item = this.interactiveItems[i];
 		if(item.touchmove)item.touchmove(touchData);
@@ -1616,7 +1666,7 @@ PIXI.InteractionManager.prototype.onTouchStart = function(event)
 		
 		var length = this.interactiveItems.length;
 		
-		for (var j = 0; j < length; j++)
+		for (var j = length - 1; j <= 0; j--)
 		{
 			var item = this.interactiveItems[j];
 			
@@ -1657,7 +1707,7 @@ PIXI.InteractionManager.prototype.onTouchEnd = function(event)
 		touchData.global.y = (touchEvent.clientY - rect.top)  * (this.target.height / rect.height);
 		
 		var length = this.interactiveItems.length;
-		for (var j = 0; j < length; j++)
+		for (var j = length - 1; j <= 0; j--)
 		{
 			var item = this.interactiveItems[j];
 			var itemTouchData = item.__touchData; // <-- Here!
