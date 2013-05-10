@@ -59,7 +59,7 @@ PIXI.InteractionManager.prototype.collectInteractiveSprite = function(displayObj
 	
 	//this.interactiveItems = [];
 	/// make an interaction tree... {item.__interactiveParent}
-	for (var i = length-1; i >= 0; i--)
+	for (var i = 0; i < length; i++)
 	{
 		var child = children[i];
 		
@@ -152,7 +152,7 @@ PIXI.InteractionManager.prototype.update = function()
 	
 	if(this.target)this.target.view.style.cursor = "default";	
 				
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var item = this.interactiveItems[i];
 		if(!item.visible)continue;
@@ -208,7 +208,7 @@ PIXI.InteractionManager.prototype.onMouseMove = function(event)
 	var global = this.mouse.global;
 	
 	
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var item = this.interactiveItems[i];
 		
@@ -238,7 +238,7 @@ PIXI.InteractionManager.prototype.onMouseDown = function(event)
 	
 	// while 
 	// hit test 
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var item = this.interactiveItems[i];
 		
@@ -269,7 +269,7 @@ PIXI.InteractionManager.prototype.onMouseUp = function(event)
 	var length = this.interactiveItems.length;
 	var up = false;
 	
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var item = this.interactiveItems[i];
 		
@@ -364,7 +364,7 @@ PIXI.InteractionManager.prototype.hitTest = function(item, interactionData)
 	
 	var length = item.children.length;
 	
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var tempItem = item.children[i];
 		var hit = this.hitTest(tempItem, interactionData);
@@ -394,7 +394,7 @@ PIXI.InteractionManager.prototype.onTouchMove = function(event)
 	}
 	
 	var length = this.interactiveItems.length;
-	for (var i = 0; i < length; i++)
+	for (var i = length - 1; i >= 0; i--)
 	{
 		var item = this.interactiveItems[i];
 		if(item.touchmove)item.touchmove(touchData);
@@ -420,7 +420,7 @@ PIXI.InteractionManager.prototype.onTouchStart = function(event)
 		
 		var length = this.interactiveItems.length;
 		
-		for (var j = 0; j < length; j++)
+		for (var j = length - 1; j <= 0; j--)
 		{
 			var item = this.interactiveItems[j];
 			
@@ -461,7 +461,7 @@ PIXI.InteractionManager.prototype.onTouchEnd = function(event)
 		touchData.global.y = (touchEvent.clientY - rect.top)  * (this.target.height / rect.height);
 		
 		var length = this.interactiveItems.length;
-		for (var j = 0; j < length; j++)
+		for (var j = length - 1; j <= 0; j--)
 		{
 			var item = this.interactiveItems[j];
 			var itemTouchData = item.__touchData; // <-- Here!
